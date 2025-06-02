@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data.Context;
 
-public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
+public class ProfileContext(DbContextOptions<ProfileContext> options) : DbContext(options)
 {
-    public DbSet<ProfileEntity>? Profiles { get; set; } //Ska jag ha den nullibale?
+    public DbSet<ProfileEntity> Profiles { get; set; } = null!;
 }

@@ -1,4 +1,5 @@
-﻿using Business.Interfaces;
+﻿using System.Security.Claims;
+using Business.Interfaces;
 using Business.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ public class ProfileController(IProfileService service) : ControllerBase
     [HttpPost("upsert")]
     public async Task<IActionResult> Upsert(ProfileRequest request)
     {
-        var userId = User.FindFirst("sub")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("Ingen giltig användare.");

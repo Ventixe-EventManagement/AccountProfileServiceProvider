@@ -15,6 +15,13 @@ public class ProfileController(IProfileService service) : ControllerBase
     [HttpPost("upsert")]
     public async Task<IActionResult> Upsert(ProfileRequest request)
     {
+        var userId = User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("Ingen giltig användare.");
+
+        request.UserId = userId;
+
         await _service.CreateOrUpdateProfileAsync(request);
         return Ok();
     }
@@ -24,5 +31,12 @@ public class ProfileController(IProfileService service) : ControllerBase
     {
         var profile = await _service.GetProfileAsync(userId);
         return profile is not null ? Ok(profile) : NotFound();
+    }
+
+    [HttpGet("exists")]
+    public async Task<IActionResult> Exists([FromQuery] string email)
+    {
+        var exists = await _service.ProfileExistsAsync(email);
+        return Ok(new { exists });
     }
 }

@@ -2,6 +2,7 @@
 using Business.Interfaces;
 using Business.Models;
 using Data.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Services;
 public class ProfileService(ProfileContext context) : IProfileService
@@ -32,4 +33,10 @@ public class ProfileService(ProfileContext context) : IProfileService
         var entity = await _context.Profiles.FindAsync(userId);
         return entity is not null ? ProfileFactory.ToDto(entity) : null;
     }
+
+    public async Task<bool> ProfileExistsAsync(string userId)
+    {
+        return await _context.Profiles.AnyAsync(p => p.UserId == userId);
+    }
+
 }

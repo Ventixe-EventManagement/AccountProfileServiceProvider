@@ -27,17 +27,25 @@ public class ProfileController(IProfileService service) : ControllerBase
         return Ok();
     }
 
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> Get(string userId)
+    [HttpGet("me")]
+    public async Task<IActionResult> GetOwnProfile()
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
         var profile = await _service.GetProfileAsync(userId);
         return profile is not null ? Ok(profile) : NotFound();
     }
 
     [HttpGet("exists")]
-    public async Task<IActionResult> Exists([FromQuery] string email)
+    public async Task<IActionResult> Exists()
     {
-        var exists = await _service.ProfileExistsAsync(email);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var exists = await _service.ProfileExistsAsync(userId);
         return Ok(new { exists });
     }
 }

@@ -17,5 +17,4 @@ public class ProfileEntity
 
     [StringLength(20)]
     public string? PhoneNumber { get; set; }
-
 }

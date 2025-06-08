@@ -1,4 +1,5 @@
 using System.Text;
+using Azure.Identity;
 using Business.Interfaces;
 using Business.Services;
 using Data.Context;
@@ -7,12 +8,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Load secrets from Azure Key Vault
+builder.Configuration.AddAzureKeyVault(
+    new Uri("https://ventixekeyvault.vault.azure.net/"),
+    new DefaultAzureCredential()
+);
 
 // Add services
 builder.Services.AddControllers();
 
-// Swagger med JWT-support
+// Swagger with JWT authentication support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Profile Service API", Version = "v1" });
@@ -41,14 +49,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Databaskoppling
+// Database connection from Vault
 builder.Services.AddDbContext<ProfileContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection")));
+    options.UseSqlServer(builder.Configuration["ConnectionStrings:SqlConnection"])
+);
 
 // Dependency injection
 builder.Services.AddScoped<IProfileService, ProfileService>();
 
-// JWT Authentication
+// JWT authentication setup
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -60,7 +69,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            )
         };
         options.Events = new JwtBearerEvents
         {
@@ -72,10 +82,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Authorization
 builder.Services.AddAuthorization();
 
-// CORS – tillåt frontend från Azure Static Web Apps
+// CORS – Allow frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -88,7 +97,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Middleware pipeline
+// Middleware
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
